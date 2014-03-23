@@ -158,13 +158,11 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 	memmove (state_ptr, state_left, DIGEST_LEN);
 	memmove (state_ptr + DIGEST_LEN, state_right, DIGEST_LEN);
 
-	/* step 5: allocate memory for each of the s-boxes */
-	for (i = 0; i < NUM_SBOXES; i++)
-		initstate.S[i] = (uint64_t *) calloc (initstate.sbox_words, WORDSIZ);
-
-	/* step 6: fill the s-boxes by iterating over the state with chacha8 */
+	/* step 5: fill the s-boxes by iterating over the state with chacha8 */
 	for (i = 0; i < NUM_SBOXES; i++)
 	{
+		initstate.S[i] = (uint64_t *) calloc (initstate.sbox_words, WORDSIZ);
+
 		for (j = 0; j < initstate.sbox_words; j+=STATE_N)
 		{
 			chacha8_64 (initstate.state);
