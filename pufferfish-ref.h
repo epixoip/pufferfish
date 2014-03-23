@@ -57,7 +57,7 @@ typedef struct pufferfish_context
 	uint64_t state[STATE_N];	/* sbox fill state */
 	uint64_t key[4];		/* generated key */
 	uint64_t salt[4];		/* hashed salt */
-	unsigned int m_cost;		/* in MiB  */
+	unsigned int m_cost;		/* in KiB  */
 	unsigned int sbox_words;	/* words per sbox */
 } puf_ctx;
 
