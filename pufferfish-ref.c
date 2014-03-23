@@ -375,7 +375,7 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	unsigned char ctext[] = "Drab as a fool, aloof as a bard.";
 
 
-	/* parse the salt string */
+	/* parse the settings string */
 
 	/* make sure we have a pufferfish hash */
 	if (strncmp (PUF_ID, settings, PUF_ID_LEN))
