@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include "pufferfish-ref.h"
@@ -423,7 +422,7 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	   the following loop like a simple prng: we repeatedly encrypt
 	   the ciphertext as the inner state, and hash the output. */
 	
-	blockcnt = ceil ((float) outlen / DIGEST_LEN);
+	blockcnt = (outlen + DIGEST_LEN - 1) / DIGEST_LEN;
 	rawbuf = (unsigned char *) calloc (blockcnt * DIGEST_LEN, sizeof (unsigned char));
 
 	for (i = 0; i < blockcnt; i++)
