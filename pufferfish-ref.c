@@ -334,7 +334,7 @@ static char *pufferfish_gensalt (const unsigned char *salt, size_t saltlen, unsi
 	}
 
 	/* the output buffer is a bit large, but better too big than too small */
-	out = (char *) calloc (PUF_ID_LEN + ((10 + saltlen) * 2), sizeof (unsigned char));
+	out = (char *) calloc (PUF_ID_LEN + ((10 + saltlen) * 2), sizeof (char));
 
 	/* copy hash identifer to the output string */
 	memmove (out, PUF_ID, PUF_ID_LEN);
