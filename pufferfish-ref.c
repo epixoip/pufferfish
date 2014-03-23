@@ -493,8 +493,8 @@ static unsigned char *pufferfish_kdf (unsigned int outlen, const char *pass, uns
 
 	const unsigned int saltlen = 16;
 	static unsigned char *key;
-	char *settings;
 	unsigned int len;
+	char *settings;
 
 	len = outlen / 8;
 
@@ -509,8 +509,8 @@ static int PHS (void *out, size_t outlen, const void *in, size_t inlen, const vo
 {
 	/* required PHS api */
 
-	char *settings = pufferfish_gensalt (salt, saltlen, t_cost, m_cost);
 	char *hash;
+	char *settings = pufferfish_gensalt (salt, saltlen, t_cost, m_cost);
 
 	if (! (hash = (char *) pufferfish_main (in, inlen, settings, outlen, false)))
 		return 1;
@@ -530,10 +530,12 @@ int main()
 	const unsigned int keylen = 256; /* 256 bits */
 	const char *password = "password";
 	const char *salt = "salty";
-	char *hash;
-	unsigned char *key;
+
 	char out[1024] = { 0 };
+	unsigned char *key;
+	char *hash;
 	int i, ret;
+
 
 	puts ("\nsimple api:");
 	hash = (char *) pufferfish (password, t_cost, m_cost);
