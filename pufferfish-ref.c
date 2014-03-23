@@ -480,6 +480,7 @@ static char *pufferfish (const char *pass, unsigned int t_cost, unsigned int m_c
 
 	settings = pufferfish_gensalt (NULL, saltlen, t_cost, m_cost);
 	hash = (char *) pufferfish_main (pass, strlen (pass), settings, outlen, false);
+	free (settings);
 
 	return hash;
 }
@@ -498,6 +499,7 @@ static unsigned char *pufferfish_kdf (unsigned int outlen, const char *pass, uns
 
 	settings = pufferfish_gensalt (NULL, saltlen, t_cost, m_cost);
 	key = pufferfish_main (pass, strlen (pass), settings, len, true);
+	free (settings);
 
 	return key;
 }
@@ -511,9 +513,13 @@ static int PHS (void *out, size_t outlen, const void *in, size_t inlen, const vo
 	char *settings = pufferfish_gensalt (salt, saltlen, t_cost, m_cost);
 
 	if (! (hash = (char *) pufferfish_main (in, inlen, settings, outlen, false)))
+	{
+		free (settings);
 		return 1;
+	}
 
 	memmove (out, hash, strlen (hash));
+	free (settings);
 	free (hash);
 
 	return 0;
@@ -537,20 +543,40 @@ int main()
 
 	puts ("\nsimple api:");
 	hash = (char *) pufferfish (password, t_cost, m_cost);
-	printf ("%s\n\n", hash);
+	if (hash)
+	{
+		printf ("%s\n\n", hash);
+		free (hash);
+	}
+	else
+	{
+		printf ("Error\n\n");
+	}
 
 	puts ("kdf api:");
 	key = pufferfish_kdf (keylen, password, t_cost, m_cost);
-	for (i=0; i < keylen/8; i++)
-		printf ("%02x ", key[i]);
-	printf ("\n\n");
+	if (key)
+	{
+		for (i=0; i < keylen/8; i++)
+			printf ("%02x ", key[i]);
+		printf ("\n\n");
+		free (key);
+	}
+	else
+	{
+		printf ("Error\n\n");
+	}
 
 	puts ("phc api:");
 	ret = PHS (out, outlen, password, strlen (password), salt, strlen (salt), t_cost, m_cost);
-	printf ("%s\n\n", out);
-
-	free (hash);
-	free (key);
+	if (ret)
+	{
+		printf ("Error\n\n");
+	}
+	else
+	{
+		printf ("%s\n\n", out);
+	}
 
 	return ret;
 }
