@@ -488,7 +488,7 @@ static int PHS (void *out, size_t outlen, const void *in, size_t inlen, const vo
 int main()
 {
 	const unsigned int t_cost = 5;   /* 2^5 rounds */
-	const unsigned int m_cost = 64;  /* 128 KiB of memory */
+	const unsigned int m_cost = 64;  /* 64 KiB of memory */
 	const unsigned int outlen = 32;  /* 32 bytes */
 	const unsigned int keylen = 256; /* 256 bits */
 	const char *password = "password";
