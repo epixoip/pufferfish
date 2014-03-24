@@ -120,11 +120,11 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 	/* the following steps initialize the dynamic s-boxes: */
 
 	/* step 1: hash the salt with sha512 to generate the hmac key */
-	SHA512 ((const unsigned char *) salt, salt_len, salt_hash);
+	SHA512 (salt, salt_len, salt_hash);
 
 	/* step 2: hmac-sha512 the password using the hashed salt as
 	   the key to initialize the state */
-	initstate.state = HMAC (EVP_sha512(), salt_hash, DIGEST_LEN, (const unsigned char *) password, password_len, NULL, NULL);
+	initstate.state = HMAC_SHA512 (salt_hash, DIGEST_LEN, password, password_len);
 
 	/* step 3: fill the s-boxes by iterating over the state with sha512 */
 	for (i = 0; i < NUM_SBOXES; i++)
@@ -133,8 +133,8 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 
 		for (j = 0; j < initstate.sbox_words; j+=STATE_N)
 		{
-			unsigned char temp[64];
-			SHA512 ((const unsigned char *) initstate.state, DIGEST_LEN, temp);
+			unsigned char temp[DIGEST_LEN];
+			SHA512 (initstate.state, DIGEST_LEN, temp);
 
 			for (k=0; k < DIGEST_LEN; k++)
 				initstate.state[k] ^= temp[k];
@@ -145,7 +145,7 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 
 	/* hmac-sha512 the password again using the resulting
 	   state as the key to generate the encryption key */
-	key_hash = HMAC (EVP_sha512(), initstate.state, DIGEST_LEN, (const unsigned char *) password, password_len, NULL, NULL);
+	key_hash = HMAC_SHA512 (initstate.state, DIGEST_LEN, password, password_len);
 
 	memmove (initstate.key, key_hash, DIGEST_LEN);	
 	memmove (initstate.salt, salt_hash, DIGEST_LEN);
@@ -361,6 +361,7 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	/* unpack the raw salt value */
 	memmove (rawsalt, decoded + 10, saltlen);
 
+	/* the follwing steps are identical to the eksblowfish algorithm */
 
 	/* initialize the context */
 	pufferfish_initstate (&context, pass, passlen, rawsalt, saltlen, m_cost);
@@ -393,7 +394,6 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 		SHA512 ((const unsigned char *) ctext, 32, rawbuf + (i * DIGEST_LEN));
 	}
 
-
 	/* if the user just wants the raw bytes (e.g. when used as a kdf)
 	   then just fill the output buffer with the raw bytes. otherwise,
 	   generate a full ascii string to place in a database. */
@@ -409,7 +409,6 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 		memmove (out, settings, settingslen);
 		encode64 ((char *) &out[settingslen], rawbuf, outlen);
 	}
-
 
 	/* cleanup */
 
@@ -487,7 +486,7 @@ static int PHS (void *out, size_t outlen, const void *in, size_t inlen, const vo
 
 int main()
 {
-	const unsigned int t_cost = 5;   /* 2^5 rounds */
+	const unsigned int t_cost = 4;   /* 2^4 rounds */
 	const unsigned int m_cost = 64;  /* 64 KiB of memory */
 	const unsigned int outlen = 32;  /* 32 bytes */
 	const unsigned int keylen = 256; /* 256 bits */
@@ -499,7 +498,6 @@ int main()
 	char *hash;
 	int i, ret;
 
-
 	puts ("\nsimple api:");
 	hash = (char *) pufferfish (password, t_cost, m_cost);
 	if (hash)
@@ -509,7 +507,7 @@ int main()
 	}
 	else
 	{
-		printf ("Error\n\n");
+		puts ("Error\n");
 	}
 
 	puts ("kdf api:");
@@ -523,14 +521,14 @@ int main()
 	}
 	else
 	{
-		printf ("Error\n\n");
+		puts ("Error\n");
 	}
 
 	puts ("phc api:");
 	ret = PHS (out, outlen, password, strlen (password), salt, strlen (salt), t_cost, m_cost);
 	if (ret)
 	{
-		printf ("Error\n\n");
+		puts ("Error\n");
 	}
 	else
 	{

@@ -1,5 +1,8 @@
 #pragma once
 
+#define HMAC_SHA512(a,b,c,d) \
+    (HMAC (EVP_sha512(), (a), (b), (const unsigned char *) (c), (d), NULL, NULL))
+
 #define char64(c)((c) > 127 ? 255 : index64[(c)])
 
 #define shr(x,n) (x >> n)
@@ -47,8 +50,7 @@ typedef struct pufferfish_context
 {
 	uint64_t P[PUF_N + 2];		/* p-array */
 	uint64_t *S[NUM_SBOXES];	/* s-boxes */
-//	uint64_t state[STATE_N];	/* sbox fill state */
-	unsigned char *state;
+	unsigned char *state;		/* sbox fill state */
 	uint64_t key[KEYSIZ];		/* generated key */
 	uint64_t salt[KEYSIZ];		/* hashed salt */
 	unsigned int m_cost;		/* in KiB  */
