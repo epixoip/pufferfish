@@ -1,19 +1,11 @@
 #pragma once
 
-#define error "*"
 #define char64(c)((c) > 127 ? 255 : index64[(c)])
 
 #define shr(x,n) (x >> n)
 #define shl(x,n) (x << n)
 #define rotr64(x,n) (shr(x,n) | (x << (64 - n)))
 #define rotl64(x,n) (shl(x,n) | (x >> (64 - n)))
-
-#define quarter(a,b,c,d) \
-    v[a] += v[b]; t = v[d]^v[a]; v[d] = rotl64(t,32); \
-    v[c] += v[d]; t = v[b]^v[c]; v[b] = rotl64(t,24); \
-    v[a] += v[b]; t = v[d]^v[a]; v[d] = rotl64(t,16); \
-    v[c] += v[d]; t = v[b]^v[c]; v[b] = rotl64(t,63);
-
 
 #define uint8_to_uint64(n,b,c)		   \
 {					   \
@@ -44,9 +36,10 @@
 #define NUM_SBOXES 4			/* number of sboxes */
 #define WORDSIZ	sizeof (uint64_t)	/* number of bytes per word */
 #define PUF_N 16			/* number of subkeys */
-#define STATE_N 16			/* number of words in state */
+#define STATE_N 8			/* number of words in state */
 #define BLOCKSIZ 16			/* number of bytes in a block */
 #define DIGEST_LEN SHA512_DIGEST_LENGTH	/* digest length */
+#define KEYSIZ DIGEST_LEN / sizeof (uint64_t)
 
 typedef enum { false, true } bool;
 
@@ -54,9 +47,10 @@ typedef struct pufferfish_context
 {
 	uint64_t P[PUF_N + 2];		/* p-array */
 	uint64_t *S[NUM_SBOXES];	/* s-boxes */
-	uint64_t state[STATE_N];	/* sbox fill state */
-	uint64_t key[4];		/* generated key */
-	uint64_t salt[4];		/* hashed salt */
+//	uint64_t state[STATE_N];	/* sbox fill state */
+	unsigned char *state;
+	uint64_t key[KEYSIZ];		/* generated key */
+	uint64_t salt[KEYSIZ];		/* hashed salt */
 	unsigned int m_cost;		/* in KiB  */
 	unsigned int sbox_words;	/* words per sbox */
 } puf_ctx;

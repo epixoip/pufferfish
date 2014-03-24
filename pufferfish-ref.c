@@ -90,33 +90,13 @@ static int decode64 (unsigned char *dst, int size, char *src)
 }
 
 
-static void chacha8_64 (uint64_t v[16])
-{
-	/* chacha8, but with 64-bit words */
-
-	uint64_t t = 0;
-	int rounds = 8;
-
-	for (; rounds; rounds -= 2)
-	{
-		quarter (0,4, 8,12)
-		quarter (1,5, 9,13)
-		quarter (2,6,10,14)
-		quarter (3,7,11,15)
-		quarter (0,5,10,15)
-		quarter (1,6,11,12)
-		quarter (2,7, 8,13)
-		quarter (3,4, 9,14)
-	}
-}
-
 static void pufferfish_initstate (puf_ctx *context, const void *password, size_t password_len, const void *salt, size_t salt_len, unsigned int m_cost)
 {
 	/* this function is absolutely nothing like Blowfish_initstate(),
 	   and is really what defines pufferfish. */
 
 	int i, j, k;
-	unsigned char *state_left, *state_right, *key_hash;
+	unsigned char *key_hash;
 	unsigned char salt_hash[DIGEST_LEN];
 
 	/* initialize the P-array with digits of Pi. this is the only part
@@ -133,12 +113,9 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 		}
 	};
 
-	uint8_t *state_ptr = (uint8_t *) initstate.state;
-
 	/* calculate number of words per s-box */
 	initstate.m_cost = m_cost;
 	initstate.sbox_words = (m_cost * 1024) / NUM_SBOXES / WORDSIZ;
-
 
 	/* the following steps initialize the dynamic s-boxes: */
 
@@ -146,47 +123,32 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 	SHA512 ((const unsigned char *) salt, salt_len, salt_hash);
 
 	/* step 2: hmac-sha512 the password using the hashed salt as
-	   the key to derive the first half of the initial state */
-	state_right = HMAC (EVP_sha512(), salt_hash, DIGEST_LEN, (const unsigned char *) password, password_len, NULL, NULL);
+	   the key to initialize the state */
+	initstate.state = HMAC (EVP_sha512(), salt_hash, DIGEST_LEN, (const unsigned char *) password, password_len, NULL, NULL);
 
-	/* step 3: hmac-sha512 the password again, this time using
-	   the initial state as the key, to derive the second half */
-	state_left = HMAC (EVP_sha512(), state_right, DIGEST_LEN, (const unsigned char *) password, password_len, NULL, NULL);
-
-	/* step 4: initialize the state with the two hmac hashes */
-	memmove (state_ptr, state_left, DIGEST_LEN);
-	memmove (state_ptr + DIGEST_LEN, state_right, DIGEST_LEN);
-
-	/* step 5: fill the s-boxes by iterating over the state with chacha8 */
+	/* step 3: fill the s-boxes by iterating over the state with sha512 */
 	for (i = 0; i < NUM_SBOXES; i++)
 	{
 		initstate.S[i] = (uint64_t *) calloc (initstate.sbox_words, WORDSIZ);
 
 		for (j = 0; j < initstate.sbox_words; j+=STATE_N)
 		{
-			chacha8_64 (initstate.state);
-			for (k = 0; k < STATE_N; k++)
-				initstate.S[i][j+k] = initstate.state[k];
+			unsigned char temp[64];
+			SHA512 ((const unsigned char *) initstate.state, DIGEST_LEN, temp);
+
+			for (k=0; k < DIGEST_LEN; k++)
+				initstate.state[k] ^= temp[k];
+
+			memmove (initstate.S[i] + j, initstate.state, DIGEST_LEN);
 		}
 	}
 
-
-	/* the following steps derive the initial pufferfish encryption key: */
-
-	/* step 1: iterate over the state with chacha8 a few more times */
-	for (i = 0; i < 64; i++)
-		chacha8_64 (initstate.state);
-
-	/* step 2: hmac-sha512 the password yet again,
-	   using the first half the state as the key */
+	/* hmac-sha512 the password again using the resulting
+	   state as the key to generate the encryption key */
 	key_hash = HMAC (EVP_sha512(), initstate.state, DIGEST_LEN, (const unsigned char *) password, password_len, NULL, NULL);
 
-	/* step 3: copy the truncated hmac hash into the key buffer */
-	memmove (initstate.key, key_hash, DIGEST_LEN/2);	
-
-	/* step 4: copy the truncated salt hash into the salt buffer */
-	memmove (initstate.salt, salt_hash, DIGEST_LEN/2);
-
+	memmove (initstate.key, key_hash, DIGEST_LEN);	
+	memmove (initstate.salt, salt_hash, DIGEST_LEN);
 
 	/* set the context */
 	*context = initstate;
@@ -252,7 +214,7 @@ static void pufferfish_ecb_encrypt (puf_ctx *context, uint8_t *data, size_t len)
 }
 
 
-static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[4], const uint64_t key[4])
+static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ], const uint64_t key[KEYSIZ])
 {
 	/* this function is largely identical to Blowfish_expandstate(), except
 	   it has been modified to use 64-bit words, dynamic s-box size, and a
@@ -262,12 +224,12 @@ static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[4], cons
 	uint64_t L = 0, R = 0;
 
 	for (i = 0; i < PUF_N + 2; i++)
-		context->P[i] ^= key[i%4];
+		context->P[i] ^= key[i%KEYSIZ];
 
 	for (i = 0; i < PUF_N + 2; i+=2)
 	{
-		L ^= data[i%4];
-		R ^= data[i%4];
+		L ^= data[i%KEYSIZ];
+		R ^= data[i%KEYSIZ];
 
 		pufferfish_encipher (context, &L, &R);
 
@@ -275,7 +237,7 @@ static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[4], cons
 		context->P[i+1] = R;
 	}
 
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < NUM_SBOXES; i++)
 	{
 		for (j = 0; j < context->sbox_words; j+=2)
 		{
@@ -288,8 +250,8 @@ static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[4], cons
 			   the memory. this should be taken into consideration when selecting an
 			   appropriate t_cost value. */
 
-			L ^= data[j%4];
-			R ^= data[j%4];
+			L ^= data[j%KEYSIZ];
+			R ^= data[j%KEYSIZ];
 
 			pufferfish_encipher (context, &L, &R);
 
@@ -358,7 +320,7 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	puf_ctx context;
 
 	long t_cost = 0, m_cost = 0, count = 0;
-	uint64_t null_data[4] = { 0 };
+	uint64_t null_data[8] = { 0 };
 
 	int i, j, settingslen, saltlen, blockcnt, bytes, pos = 0;
 
@@ -370,7 +332,6 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	unsigned char decoded[255] = { 0 };
 	unsigned char rawsalt[255] = { 0 };
 	unsigned char ctext[] = "Drab as a fool, aloof as a bard.";
-
 
 	/* parse the settings string */
 
@@ -415,7 +376,6 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 		pufferfish_expandkey (&context, null_data, context.key);
 	}
 	while (--count);
-
 
 	/* to support a variable output length (e.g., when used as a kdf)
 	   at minimal cost while still providing good security, we treat
@@ -528,7 +488,7 @@ static int PHS (void *out, size_t outlen, const void *in, size_t inlen, const vo
 int main()
 {
 	const unsigned int t_cost = 5;   /* 2^5 rounds */
-	const unsigned int m_cost = 64;  /* 64 KiB of memory */
+	const unsigned int m_cost = 64;  /* 128 KiB of memory */
 	const unsigned int outlen = 32;  /* 32 bytes */
 	const unsigned int keylen = 256; /* 256 bits */
 	const char *password = "password";
