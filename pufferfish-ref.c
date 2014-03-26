@@ -147,11 +147,13 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 	   state as the key to generate the encryption key */
 	key_hash = HMAC_SHA512 (initstate.state, DIGEST_LEN, password, password_len);
 
-	memmove (initstate.key, key_hash, DIGEST_LEN);	
-	memmove (initstate.salt, salt_hash, DIGEST_LEN);
-
 	/* set the context */
 	*context = initstate;
+	memmove (context->key, key_hash, DIGEST_LEN);
+	memmove (context->salt, salt_hash, DIGEST_LEN);
+
+	/* clean up openssl static data */
+	memset (key_hash, 0, DIGEST_LEN);
 }
 
 
