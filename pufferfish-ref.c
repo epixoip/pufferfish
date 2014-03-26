@@ -11,7 +11,7 @@
 #include "pufferfish-ref.h"
 
 
-static int encode64 (char *dst, unsigned char *src, int size)
+static int pf_encode64 (char *dst, unsigned char *src, int size)
 {
 	/* this function is identical to encode_base64() */
 
@@ -54,7 +54,7 @@ static int encode64 (char *dst, unsigned char *src, int size)
 }
 
 
-static int decode64 (unsigned char *dst, int size, char *src)
+static int pf_decode64 (unsigned char *dst, int size, char *src)
 {
 	/* this function is identical to decode_base64() */
 
@@ -90,14 +90,15 @@ static int decode64 (unsigned char *dst, int size, char *src)
 }
 
 
-static void pufferfish_initstate (puf_ctx *context, const void *password, size_t password_len, const void *salt, size_t salt_len, unsigned int m_cost)
+static void pf_initstate (puf_ctx *context, const void *password, size_t password_len, const void *salt, size_t salt_len, unsigned int m_cost)
 {
 	/* this function is absolutely nothing like Blowfish_initstate(),
 	   and is really what defines pufferfish. */
 
-	int i, j, k;
+	int i, j;
 	unsigned char *key_hash;
 	unsigned char salt_hash[DIGEST_LEN];
+	uint64_t *state;
 
 	/* initialize the P-array with digits of Pi. this is the only part
 	   of the function that resembles Blowfish_initstate() */
@@ -124,7 +125,7 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 
 	/* step 2: hmac-sha512 the password using the hashed salt as
 	   the key to initialize the state */
-	initstate.state = HMAC_SHA512 (salt_hash, DIGEST_LEN, password, password_len);
+	state = (uint64_t*) HMAC_SHA512 (salt_hash, DIGEST_LEN, password, password_len);
 
 	/* step 3: fill the s-boxes by iterating over the state with sha512 */
 	for (i = 0; i < NUM_SBOXES; i++)
@@ -133,19 +134,14 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 
 		for (j = 0; j < initstate.sbox_words; j+=STATE_N)
 		{
-			unsigned char temp[DIGEST_LEN];
-			SHA512 (initstate.state, DIGEST_LEN, temp);
-
-			for (k=0; k < DIGEST_LEN; k++)
-				initstate.state[k] ^= temp[k];
-
-			memmove (initstate.S[i] + j, initstate.state, DIGEST_LEN);
+			SHA512 ((const unsigned char *) state, DIGEST_LEN, (unsigned char *)(initstate.S[i] + j));
+			state = initstate.S[i] + j;
 		}
 	}
 
 	/* hmac-sha512 the password again using the resulting
 	   state as the key to generate the encryption key */
-	key_hash = HMAC_SHA512 (initstate.state, DIGEST_LEN, password, password_len);
+	key_hash = HMAC_SHA512 ((const unsigned char *) state, DIGEST_LEN, password, password_len);
 
 	/* set the context */
 	*context = initstate;
@@ -157,7 +153,7 @@ static void pufferfish_initstate (puf_ctx *context, const void *password, size_t
 }
 
 
-static uint64_t pufferfish_f (puf_ctx *context, uint64_t x)
+static uint64_t pf_f (puf_ctx *context, uint64_t x)
 {
 	/* modified substantially from the original blowfish implementation,
 	   to use dynamic s-box size and to improve the distribution of the
@@ -171,7 +167,7 @@ static uint64_t pufferfish_f (puf_ctx *context, uint64_t x)
 }
 
 
-static void pufferfish_encipher (puf_ctx *context, uint64_t *LL, uint64_t *RR)
+static void pf_encipher (puf_ctx *context, uint64_t *LL, uint64_t *RR)
 {
 	/* this function is identical to Blowfish_encipher(), except
 	   it has been modified to use 64-bit words. */
@@ -182,9 +178,9 @@ static void pufferfish_encipher (puf_ctx *context, uint64_t *LL, uint64_t *RR)
 	for (i = 0; i < PUF_N; i+=2)
 	{
 		L ^= context->P[i];
-		R ^= pufferfish_f (context, L);
+		R ^= pf_f (context, L);
 		R ^= context->P[i+1];
-		L ^= pufferfish_f (context, R);
+		L ^= pf_f (context, R);
 	}
 
 	L ^= context->P[16];
@@ -194,7 +190,7 @@ static void pufferfish_encipher (puf_ctx *context, uint64_t *LL, uint64_t *RR)
 }
 
 
-static void pufferfish_ecb_encrypt (puf_ctx *context, uint8_t *data, size_t len)
+static void pf_ecb_encrypt (puf_ctx *context, uint8_t *data, size_t len)
 {
 	/* this function is identical to blf_ecb_encrypt(), except it has
 	   been modified to use 64-bit words and a 128-bit blocksize. */
@@ -206,7 +202,7 @@ static void pufferfish_ecb_encrypt (puf_ctx *context, uint8_t *data, size_t len)
 		uint8_to_uint64 (L, data, 0);
 		uint8_to_uint64 (R, data, 8);
 
-		pufferfish_encipher (context, &L, &R);
+		pf_encipher (context, &L, &R);
 
 		uint64_to_uchar (L, data, 0);
 		uint64_to_uchar (R, data, 8);
@@ -216,7 +212,7 @@ static void pufferfish_ecb_encrypt (puf_ctx *context, uint8_t *data, size_t len)
 }
 
 
-static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ], const uint64_t key[KEYSIZ])
+static void pf_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ], const uint64_t key[KEYSIZ])
 {
 	/* this function is largely identical to Blowfish_expandstate(), except
 	   it has been modified to use 64-bit words, dynamic s-box size, and a
@@ -233,7 +229,7 @@ static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ],
 		L ^= data[i%KEYSIZ];
 		R ^= data[i%KEYSIZ];
 
-		pufferfish_encipher (context, &L, &R);
+		pf_encipher (context, &L, &R);
 
 		context->P[i]   = L;
 		context->P[i+1] = R;
@@ -255,7 +251,7 @@ static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ],
 			L ^= data[j%KEYSIZ];
 			R ^= data[j%KEYSIZ];
 
-			pufferfish_encipher (context, &L, &R);
+			pf_encipher (context, &L, &R);
 
 			context->S[i][j]   = L;
 			context->S[i][j+1] = R;
@@ -264,7 +260,7 @@ static void pufferfish_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ],
 }
 
 
-static char *pufferfish_gensalt (const unsigned char *salt, size_t saltlen, unsigned int t_cost, unsigned int m_cost)
+static char *pf_gensalt (const unsigned char *salt, size_t saltlen, unsigned int t_cost, unsigned int m_cost)
 {
 	/* simple function to generate a salt and build the settings string.
 	   string format is $id$itoa64(hex(t_cost).hex(m_cost).salt)$ */
@@ -301,7 +297,7 @@ static char *pufferfish_gensalt (const unsigned char *salt, size_t saltlen, unsi
 	memmove (out, PUF_ID, PUF_ID_LEN);
 
 	/* encode the buffer and copy it to the output string */
-	bytes = encode64 (&out[PUF_ID_LEN], buf, saltlen + 10);
+	bytes = pf_encode64 (&out[PUF_ID_LEN], buf, saltlen + 10);
 
 	/* add the trailing $ to the output string */
 	out[PUF_ID_LEN + bytes] = '$';
@@ -313,7 +309,7 @@ static char *pufferfish_gensalt (const unsigned char *salt, size_t saltlen, unsi
 }
 
 
-static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *settings, size_t outlen, bool raw)
+static unsigned char *pf_main (const char *pass, size_t passlen, char *settings, size_t outlen, bool raw)
 {
 	/* the main pufferfish function. probably shouldn't call this directly */
 
@@ -324,11 +320,11 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	long t_cost = 0, m_cost = 0, count = 0;
 	uint64_t null_data[8] = { 0 };
 
-	int i, j, settingslen, saltlen, blockcnt, bytes, pos = 0;
+	int i, j, settingslen, saltlen, blockcnt, bytes = 0, pos = 0;
 
 	char *sptr;
-	char tcost_str[4] = { '0', 'x', 0 };
-	char mcost_str[10] = { '0', 'x', 0 };
+	char tcost_str[5] = { '0', 'x', 0 };
+	char mcost_str[11] = { '0', 'x', 0 };
 
 	unsigned char *rawbuf;
 	unsigned char decoded[255] = { 0 };
@@ -342,13 +338,13 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 		return NULL;
 
 	settingslen = strlen (settings);
-	sptr = settings + 4;
+	sptr = settings + PUF_ID_LEN;
 
 	/* find where the settings string ends */
 	while (*sptr++ != '$' && pos < settingslen) pos++;
 
 	/* decode the settings string */
-	bytes = decode64 (decoded, pos, settings + 4);
+	bytes = pf_decode64 (decoded, pos, settings + PUF_ID_LEN);
 	saltlen = bytes - 10;
 
 	/* unpack t_cost value */
@@ -366,17 +362,17 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	/* the follwing steps are identical to the eksblowfish algorithm */
 
 	/* initialize the context */
-	pufferfish_initstate (&context, pass, passlen, rawsalt, saltlen, m_cost);
+	pf_initstate (&context, pass, passlen, rawsalt, saltlen, m_cost);
 
 	/* expand the key ... */
-	pufferfish_expandkey (&context, context.salt, context.key);
+	pf_expandkey (&context, context.salt, context.key);
 
 	/* ... again and again */
 	count = 1 << t_cost; 
 	do
 	{
-		pufferfish_expandkey (&context, null_data, context.salt);
-		pufferfish_expandkey (&context, null_data, context.key);
+		pf_expandkey (&context, null_data, context.salt);
+		pf_expandkey (&context, null_data, context.key);
 	}
 	while (--count);
 
@@ -391,7 +387,7 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	for (i = 0; i < blockcnt; i++)
 	{
 		for (j = 0; j < 64; j++)
-			pufferfish_ecb_encrypt (&context, ctext, 32);
+			pf_ecb_encrypt (&context, ctext, 32);
 
 		SHA512 ((const unsigned char *) ctext, 32, rawbuf + (i * DIGEST_LEN));
 	}
@@ -409,7 +405,7 @@ static unsigned char *pufferfish_main (const char *pass, size_t passlen, char *s
 	{
 		out = (unsigned char *) calloc (settingslen + 1 + (blockcnt * DIGEST_LEN * 2), sizeof (unsigned char));
 		memmove (out, settings, settingslen);
-		encode64 ((char *) &out[settingslen], rawbuf, outlen);
+		pf_encode64 ((char *) &out[settingslen], rawbuf, outlen);
 	}
 
 	/* cleanup */
@@ -438,14 +434,14 @@ static char *pufferfish (const char *pass, unsigned int t_cost, unsigned int m_c
 	static char *hash;
 	char *settings;
 
-	settings = pufferfish_gensalt (NULL, saltlen, t_cost, m_cost);
-	hash = (char *) pufferfish_main (pass, strlen (pass), settings, outlen, false);
+	settings = pf_gensalt (NULL, saltlen, t_cost, m_cost);
+	hash = (char *) pf_main (pass, strlen (pass), settings, outlen, false);
 	free (settings);
 
 	return hash;
 }
 
-static unsigned char *pufferfish_kdf (unsigned int outlen, const char *pass, unsigned int t_cost, unsigned int m_cost)
+static unsigned char *pfkdf (unsigned int outlen, const char *pass, unsigned int t_cost, unsigned int m_cost)
 {
 	/* this is the simple api for deriving a key.
 	   outlen is specified in BITS, not bytes! */
@@ -457,8 +453,8 @@ static unsigned char *pufferfish_kdf (unsigned int outlen, const char *pass, uns
 
 	len = outlen / 8;
 
-	settings = pufferfish_gensalt (NULL, saltlen, t_cost, m_cost);
-	key = pufferfish_main (pass, strlen (pass), settings, len, true);
+	settings = pf_gensalt (NULL, saltlen, t_cost, m_cost);
+	key = pf_main (pass, strlen (pass), settings, len, true);
 	free (settings);
 
 	return key;
@@ -470,9 +466,9 @@ static int PHS (void *out, size_t outlen, const void *in, size_t inlen, const vo
 	/* required PHS api */
 
 	char *hash;
-	char *settings = pufferfish_gensalt (salt, saltlen, t_cost, m_cost);
+	char *settings = pf_gensalt (salt, saltlen, t_cost, m_cost);
 
-	if (! (hash = (char *) pufferfish_main (in, inlen, settings, outlen, false)))
+	if (! (hash = (char *) pf_main (in, inlen, settings, outlen, false)))
 	{
 		free (settings);
 		return 1;
@@ -513,7 +509,7 @@ int main()
 	}
 
 	puts ("kdf api:");
-	key = pufferfish_kdf (keylen, password, t_cost, m_cost);
+	key = pfkdf (keylen, password, t_cost, m_cost);
 	if (key)
 	{
 		for (i=0; i < keylen/8; i++)
