@@ -8,89 +8,10 @@
 #include <string.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
-#include "pufferfish-ref.h"
+#include "pufferfish.h"
 
 
-static int pf_encode64 (char *dst, unsigned char *src, int size)
-{
-	/* this function is identical to encode_base64() */
-
-	char *dptr = dst;
-	unsigned char *sptr = src;
-	unsigned char *end  = sptr + size;
-	unsigned char c1, c2;
-
-	do {
-		c1 = *sptr++;
-		*dptr++ = itoa64[shr(c1, 2)];
-		c1 = shl((c1 & 0x03), 4);
-
-		if (sptr >= end)
-		{
-			*dptr++ = itoa64[c1];
-			break;
-		}
-
-		c2 = *sptr++;
-		c1 |= shr(c2, 4) & 0x0f;
-		*dptr++ = itoa64[c1];
-		c1 = shl((c2 & 0x0f), 2);
-
-		if (sptr >= end)
-		{
-			*dptr++ = itoa64[c1];
-			break;
-		}
-
-		c2 = *sptr++;
-		c1 |= shr(c2, 6) & 0x03;
-		*dptr++ = itoa64[c1];
-		*dptr++ = itoa64[c2 & 0x3f];
-	} while (sptr < end);
-
-	*dptr = '\0';
-
-	return (dptr - dst);
-}
-
-
-static int pf_decode64 (unsigned char *dst, int size, char *src)
-{
-	/* this function is identical to decode_base64() */
-
-	unsigned char *sptr = (unsigned char *) src;
-	unsigned char *dptr = dst;
-	unsigned char *end  = dst + size;
-	unsigned char c1, c2, c3, c4;
-
-	do
-	{
-		c1 = char64(*sptr);
-		c2 = char64(*(sptr + 1));
-
-		if (c1 == 255 || c2 == 255) break;
-
-		*dptr++ = shl(c1, 2) | shr((c2 & 0x30), 4);
-		if (dptr >= end) break;
-
-		c3 = char64(*(sptr + 2));
-		if (c3 == 255) break;
-
-		*dptr++ = shl((c2 & 0x0f), 4) | shr((c3 & 0x3c), 2);
-		if (dptr >= end) break;
-
-		c4 = char64(*(sptr + 3));
-		if (c4 == 255) break;
-
-		*dptr++ = shl((c3 & 0x03), 6) | c4;
-		sptr += 4;
-	} while (dptr < end);
-
-	return (dptr - dst);
-}
-
-
-static void pf_initstate (puf_ctx *context, const void *password, size_t password_len, const void *salt, size_t salt_len, unsigned int m_cost)
+static void pf_initstate (puf_ctx *context, const void *pass, size_t passlen, const void *salt, size_t salt_len, unsigned int m_cost)
 {
 	/* this function is absolutely nothing like Blowfish_initstate(),
 	   and is really what defines pufferfish. */
@@ -125,7 +46,7 @@ static void pf_initstate (puf_ctx *context, const void *password, size_t passwor
 
 	/* step 2: hmac-sha512 the password using the hashed salt as
 	   the key to initialize the state */
-	state = (uint64_t*) HMAC_SHA512 (salt_hash, DIGEST_LEN, password, password_len);
+	state = (uint64_t*) HMAC_SHA512 (salt_hash, DIGEST_LEN, pass, passlen);
 
 	/* step 3: fill the s-boxes by iterating over the state with sha512 */
 	for (i = 0; i < NUM_SBOXES; i++)
@@ -141,7 +62,7 @@ static void pf_initstate (puf_ctx *context, const void *password, size_t passwor
 
 	/* hmac-sha512 the password again using the resulting
 	   state as the key to generate the encryption key */
-	key_hash = HMAC_SHA512 ((const unsigned char *) state, DIGEST_LEN, password, password_len);
+	key_hash = HMAC_SHA512 ((const unsigned char *) state, DIGEST_LEN, pass, passlen);
 
 	/* set the context */
 	*context = initstate;
@@ -259,8 +180,84 @@ static void pf_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ], const u
 	}
 }
 
+static int pf_encode64 (char *dst, unsigned char *src, int size)
+{
+	/* this function is identical to encode_base64() */
 
-static char *pf_gensalt (const unsigned char *salt, size_t saltlen, unsigned int t_cost, unsigned int m_cost)
+	char *dptr = dst;
+	unsigned char *sptr = src;
+	unsigned char *end  = sptr + size;
+	unsigned char c1, c2;
+
+	do {
+		c1 = *sptr++;
+		*dptr++ = itoa64[shr(c1, 2)];
+		c1 = shl((c1 & 0x03), 4);
+
+		if (sptr >= end)
+		{
+			*dptr++ = itoa64[c1];
+			break;
+		}
+
+		c2 = *sptr++;
+		c1 |= shr(c2, 4) & 0x0f;
+		*dptr++ = itoa64[c1];
+		c1 = shl((c2 & 0x0f), 2);
+
+		if (sptr >= end)
+		{
+			*dptr++ = itoa64[c1];
+			break;
+		}
+
+		c2 = *sptr++;
+		c1 |= shr(c2, 6) & 0x03;
+		*dptr++ = itoa64[c1];
+		*dptr++ = itoa64[c2 & 0x3f];
+	} while (sptr < end);
+
+	*dptr = '\0';
+
+	return (dptr - dst);
+}
+
+static int pf_decode64 (unsigned char *dst, int size, char *src)
+{
+	/* this function is identical to decode_base64() */
+
+	unsigned char *sptr = (unsigned char *) src;
+	unsigned char *dptr = dst;
+	unsigned char *end  = dst + size;
+	unsigned char c1, c2, c3, c4;
+
+	do
+	{
+		c1 = char64(*sptr);
+		c2 = char64(*(sptr + 1));
+
+		if (c1 == 255 || c2 == 255) break;
+
+		*dptr++ = shl(c1, 2) | shr((c2 & 0x30), 4);
+		if (dptr >= end) break;
+
+		c3 = char64(*(sptr + 2));
+		if (c3 == 255) break;
+
+		*dptr++ = shl((c2 & 0x0f), 4) | shr((c3 & 0x3c), 2);
+		if (dptr >= end) break;
+
+		c4 = char64(*(sptr + 3));
+		if (c4 == 255) break;
+
+		*dptr++ = shl((c3 & 0x03), 6) | c4;
+		sptr += 4;
+	} while (dptr < end);
+
+	return (dptr - dst);
+}
+
+char *pf_gensalt (const unsigned char *salt, size_t saltlen, unsigned int t_cost, unsigned int m_cost)
 {
 	/* simple function to generate a salt and build the settings string.
 	   string format is $id$itoa64(hex(t_cost).hex(m_cost).salt)$ */
@@ -308,8 +305,7 @@ static char *pf_gensalt (const unsigned char *salt, size_t saltlen, unsigned int
 	return out;
 }
 
-
-static unsigned char *pf_main (const char *pass, size_t passlen, char *settings, size_t outlen, bool raw)
+void *pufferfish (const char *pass, size_t passlen, char *settings, size_t outlen, bool raw)
 {
 	/* the main pufferfish function. probably shouldn't call this directly */
 
@@ -343,6 +339,8 @@ static unsigned char *pf_main (const char *pass, size_t passlen, char *settings,
 	/* find where the settings string ends */
 	while (*sptr++ != '$' && pos < settingslen) pos++;
 
+	settingslen = pos + PUF_ID_LEN + 1;
+
 	/* decode the settings string */
 	bytes = pf_decode64 (decoded, pos, settings + PUF_ID_LEN);
 	saltlen = bytes - 10;
@@ -368,7 +366,7 @@ static unsigned char *pf_main (const char *pass, size_t passlen, char *settings,
 	pf_expandkey (&context, context.salt, context.key);
 
 	/* ... again and again */
-	count = 1 << t_cost; 
+	count = 1 << t_cost;
 	do
 	{
 		pf_expandkey (&context, null_data, context.salt);
@@ -380,7 +378,7 @@ static unsigned char *pf_main (const char *pass, size_t passlen, char *settings,
 	   at minimal cost while still providing good security, we treat
 	   the following loop like a simple prng: we repeatedly encrypt
 	   the ciphertext as the inner state, and hash the output. */
-	
+
 	blockcnt = (outlen + DIGEST_LEN - 1) / DIGEST_LEN;
 	rawbuf = (unsigned char *) calloc (blockcnt * DIGEST_LEN, sizeof (unsigned char));
 
@@ -416,7 +414,7 @@ static unsigned char *pf_main (const char *pass, size_t passlen, char *settings,
 			context.S[i][j] = 0;
 		free (context.S[i]);
 	}
-	
+
 	memset (&context, 0, sizeof (puf_ctx));
 	memset (ctext, 0, 32);
 	free (rawbuf);
@@ -424,8 +422,7 @@ static unsigned char *pf_main (const char *pass, size_t passlen, char *settings,
 	return out;
 }
 
-
-static char *pufferfish (const char *pass, unsigned int t_cost, unsigned int m_cost)
+char *pufferfish_easy (const char *pass, unsigned int t_cost, unsigned int m_cost)
 {
 	/* this is the simple api for password hashing */
 
@@ -435,13 +432,30 @@ static char *pufferfish (const char *pass, unsigned int t_cost, unsigned int m_c
 	char *settings;
 
 	settings = pf_gensalt (NULL, saltlen, t_cost, m_cost);
-	hash = (char *) pf_main (pass, strlen (pass), settings, outlen, false);
+	hash = (char *) pufferfish (pass, strlen (pass), settings, outlen, false);
 	free (settings);
 
 	return hash;
 }
 
-static unsigned char *pfkdf (unsigned int outlen, const char *pass, unsigned int t_cost, unsigned int m_cost)
+int pufferfish_validate (const char *pass, char *correct_hash)
+{
+	/* constant-time comparison of password hashes */
+
+	int i, diff = 0;
+	char *hash = (char *) pufferfish (pass, strlen (pass), correct_hash, 32, false);
+
+	diff = strlen (hash) ^ strlen (correct_hash);
+
+	for (i = 0; i < strlen (hash) && i < strlen (correct_hash); i++)
+		diff |= hash[i] ^ correct_hash[i];
+
+	free (hash);
+
+	return (diff != 0);
+}
+
+unsigned char *pfkdf (unsigned int outlen, const char *pass, unsigned int t_cost, unsigned int m_cost)
 {
 	/* this is the simple api for deriving a key.
 	   outlen is specified in BITS, not bytes! */
@@ -454,21 +468,20 @@ static unsigned char *pfkdf (unsigned int outlen, const char *pass, unsigned int
 	len = outlen / 8;
 
 	settings = pf_gensalt (NULL, saltlen, t_cost, m_cost);
-	key = pf_main (pass, strlen (pass), settings, len, true);
+	key = pufferfish (pass, strlen (pass), settings, len, true);
 	free (settings);
 
 	return key;
 }
 
-
-static int PHS (void *out, size_t outlen, const void *in, size_t inlen, const void *salt, size_t saltlen, unsigned int t_cost, unsigned int m_cost)
+int PHS (void *out, size_t outlen, const void *in, size_t inlen, const void *salt, size_t saltlen, unsigned int t_cost, unsigned int m_cost)
 {
 	/* required PHS api */
 
 	char *hash;
 	char *settings = pf_gensalt (salt, saltlen, t_cost, m_cost);
 
-	if (! (hash = (char *) pf_main (in, inlen, settings, outlen, false)))
+	if (! (hash = (char *) pufferfish (in, inlen, settings, outlen, false)))
 	{
 		free (settings);
 		return 1;
@@ -479,60 +492,5 @@ static int PHS (void *out, size_t outlen, const void *in, size_t inlen, const vo
 	free (hash);
 
 	return 0;
-}
-
-
-int main()
-{
-	const unsigned int t_cost = 4;   /* 2^4 rounds */
-	const unsigned int m_cost = 64;  /* 64 KiB of memory */
-	const unsigned int outlen = 32;  /* 32 bytes */
-	const unsigned int keylen = 256; /* 256 bits */
-	const char *password = "password";
-	const char *salt = "salty";
-
-	char out[1024] = { 0 };
-	unsigned char *key;
-	char *hash;
-	int i, ret;
-
-	puts ("\nsimple api:");
-	hash = (char *) pufferfish (password, t_cost, m_cost);
-	if (hash)
-	{
-		printf ("%s\n\n", hash);
-		free (hash);
-	}
-	else
-	{
-		puts ("Error\n");
-	}
-
-	puts ("kdf api:");
-	key = pfkdf (keylen, password, t_cost, m_cost);
-	if (key)
-	{
-		for (i=0; i < keylen/8; i++)
-			printf ("%02x ", key[i]);
-		printf ("\n\n");
-		free (key);
-	}
-	else
-	{
-		puts ("Error\n");
-	}
-
-	puts ("phc api:");
-	ret = PHS (out, outlen, password, strlen (password), salt, strlen (salt), t_cost, m_cost);
-	if (ret)
-	{
-		puts ("Error\n");
-	}
-	else
-	{
-		printf ("%s\n\n", out);
-	}
-
-	return ret;
 }
 
