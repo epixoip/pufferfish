@@ -287,8 +287,8 @@ diff -Naur JohnTheRipper/src/pf_ref.h JohnTheRipper-mine/src/pf_ref.h
 +#define STATE_N 8				/* number of words in state */
 +#define BLOCKSIZ 16				/* number of bytes in a block */
 +#define DIGEST_LEN SHA512_DIGEST_LENGTH		/* digest length */
-+#define KEYSIZ DIGEST_LEN / sizeof (uint64_t)	/* number of words in key */
-+#define OUTSIZ KEYSIZ / 2			/* number of words in output */
++#define KEYSIZ (DIGEST_LEN / sizeof (uint64_t))	/* number of words in key */
++#define OUTSIZ (KEYSIZ / 2)			/* number of words in output */
 +
 +#define HMAC_SHA512(a,b,c,d) \
 +    (HMAC (EVP_sha512(), (a), (b), (const unsigned char *) (c), (d), NULL, NULL))
