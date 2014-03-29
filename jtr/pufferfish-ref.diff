@@ -157,7 +157,7 @@ diff -Naur JohnTheRipper/src/pf_ref.c JohnTheRipper-mine/src/pf_ref.c
 +	for (i = 0; i < PUF_N + 2; i+=2)
 +	{
 +		L ^= data[i%KEYSIZ];
-+		R ^= data[i%KEYSIZ];
++		R ^= data[(i+1)%KEYSIZ];
 +
 +		pf_encipher (context, &L, &R);
 +
@@ -170,7 +170,7 @@ diff -Naur JohnTheRipper/src/pf_ref.c JohnTheRipper-mine/src/pf_ref.c
 +		for (j = 0; j < context->sbox_words; j+=2)
 +		{
 +			L ^= data[j%KEYSIZ];
-+			R ^= data[j%KEYSIZ];
++			R ^= data[(j+1)%KEYSIZ];
 +
 +			pf_encipher (context, &L, &R);
 +
@@ -408,14 +408,14 @@ diff -Naur JohnTheRipper/src/pufferfish_ref_fmt_plug.c JohnTheRipper-mine/src/pu
 +#define MAX_KEYS_PER_CRYPT		1
 +
 +static struct fmt_tests tests[] = {
-+	{ "$PF$KBSuKB.uKB.vKCWqfQVWk3RcX61ISTUW/U2$KjcMYs5xtfgOOWrIiPUxCQv.BfhsY3aVYjl4HsGWihK", "" },
-+	{ "$PF$KBSuKB.uKB.vKGYZ1Sqqv1YruVktzJyae76$CaFYby09WEupcZZ6ySXkmwKGN90UfYrnr6MJi0iUCiC", "a" },
-+	{ "$PF$KBSuKB.uKB.vKEVah2Sg/3nl/cNsXEuoE22$RLnzHgy9dLoV5eSBfgWNno0xlJ7J2Hs7DWaXeOaBz2a", "aa" },
-+	{ "$PF$KBSuKB.uKB.vKNFeDZwQxZiwpQka.MFItsi$ZAnb3wFrLu2gKby9MR.HbPENUpedq6xesGv7wd5dwYi", "aaa" },
-+	{ "$PF$KBSuKB.uKB.vKFknu3O3Ga7XAq/LSLAfyae$e5FY2QD.NIQUMFsPX.7ChsA/4bkVM72mC0wu/PzTpIC", "123456" },
-+	{ "$PF$KBSuKB.uKB.vKH1Y9d3WT4rj9g9dMdKDXTW$i9SArVzn1tfZweRn.KKbO5/mswNH0PGmSzPJKBP60EC", "password" },
-+	{ "$PF$KBSuKB.uKB.vK.JiBpmxFbhCI2nnLBUko2e$n1M2MZDjy5lysecScPeRoqmiAn7tir1Wo6rSi4JsRz2", "mot\xf6rhead" },
-+	{ "$PF$KBSuKB.uKB.vKLxrMo3L30n5oD2QCpt34j.$EMADug1PKKp3zv4Y8W5ikEI5aIrp9Qa90XrN0kcRJh6", "\x55\xaa\xff\x55\xaa\xff\x55\xaa\xff\x55\xaa\xff" },
++       { "$PF$KBSuKB.uKB.vKAOQHZtzQxBtvj/T/xkN1Oa$MSU8.Jk.OmLLYlghfye64bmLE8Nn9I3AFmZOcxxX9Aa", "" },
++       { "$PF$KBSuKB.uKB.vKEvts.CQMuuXPraG/5RPPNm$KEE4B3HKqerdhBg7hWpZQlxBP.2oAeXYZD3JQBzLO9q", "a" },
++       { "$PF$KBSuKB.uKB.vKCFm6bAffJ0pumvrc9Ev3B.$UNnWAzgES.7cwea0QwfR0O1/n.1NBXfQLyNu69lE1O.", "aa" },
++       { "$PF$KBSuKB.uKB.vKFxrqLhJdCHxGsFON0UYjpO$gCBKnhg.kWgT9RyZjfusJKsy8PEtH6K8rRa3tCyCmPO", "aaa" },
++       { "$PF$KBSuKB.uKB.vKI438bkqNKBWoMRfw2PdZou$CMEmT5taen5vHXyfKFVLhBD7Gztck8Ty3tZRaWMyoei", "123456" },
++       { "$PF$KBSuKB.uKB.vKF9Tn16RduDAgTM3Z.l/aei$pmMUjSCEqRPgvDuQd.4TILoHBCJb.eRI1OJs9wHl6tK", "password" },
++       { "$PF$KBSuKB.uKB.vKCJjRcbMHw0f.TSl9tnE01W$l68/0NyLXZ7OlS5Q0afncXe.zF6JreHmHGmGXu8Jvl6", "mot\xf6rhead" },
++       { "$PF$KBSuKB.uKB.vK/8xcuBfKOSYY2E8LsCUn9y$juY7gfiHtJtCOyCuppn4e8jdhhBtenAndOpLyg3UQLi", "\x55\xaa\xff\x55\xaa\xff\x55\xaa\xff\x55\xaa\xff" },
 +	{ NULL }
 +};
 +

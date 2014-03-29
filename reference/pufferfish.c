@@ -148,7 +148,7 @@ static void pf_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ], const u
 	for (i = 0; i < PUF_N + 2; i+=2)
 	{
 		L ^= data[i%KEYSIZ];
-		R ^= data[i%KEYSIZ];
+		R ^= data[(i+1)%KEYSIZ];
 
 		pf_encipher (context, &L, &R);
 
@@ -170,7 +170,7 @@ static void pf_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ], const u
 			   appropriate t_cost value. */
 
 			L ^= data[j%KEYSIZ];
-			R ^= data[j%KEYSIZ];
+			R ^= data[(j+1)%KEYSIZ];
 
 			pf_encipher (context, &L, &R);
 
