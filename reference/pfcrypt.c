@@ -51,8 +51,10 @@ int main (int argc, char **argv)
 
 	free (settings);
 	free (hash);
-	free (salt);
 	free (tmp);
+
+	if (argc != 4)
+		free (salt);
 
 	memset (password, 0, 255);
 
