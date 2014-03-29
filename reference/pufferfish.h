@@ -40,7 +40,7 @@
 #define WORDSIZ	sizeof (uint64_t)	/* number of bytes per word */
 #define BLOCKSIZ 16			/* number of bytes in a block */
 #define DIGEST_LEN SHA512_DIGEST_LENGTH	/* digest length */
-#define KEYSIZ DIGEST_LEN / sizeof (uint64_t)
+#define KEYSIZ (DIGEST_LEN / sizeof (uint64_t)) 
 
 typedef struct pf_context
 {

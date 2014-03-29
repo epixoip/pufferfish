@@ -408,14 +408,14 @@ diff -Naur JohnTheRipper/src/pufferfish_ref_fmt_plug.c JohnTheRipper-mine/src/pu
 +#define MAX_KEYS_PER_CRYPT		1
 +
 +static struct fmt_tests tests[] = {
-+       { "$PF$KBSuKB.uKB.vKAOQHZtzQxBtvj/T/xkN1Oa$MSU8.Jk.OmLLYlghfye64bmLE8Nn9I3AFmZOcxxX9Aa", "" },
-+       { "$PF$KBSuKB.uKB.vKEvts.CQMuuXPraG/5RPPNm$KEE4B3HKqerdhBg7hWpZQlxBP.2oAeXYZD3JQBzLO9q", "a" },
-+       { "$PF$KBSuKB.uKB.vKCFm6bAffJ0pumvrc9Ev3B.$UNnWAzgES.7cwea0QwfR0O1/n.1NBXfQLyNu69lE1O.", "aa" },
-+       { "$PF$KBSuKB.uKB.vKFxrqLhJdCHxGsFON0UYjpO$gCBKnhg.kWgT9RyZjfusJKsy8PEtH6K8rRa3tCyCmPO", "aaa" },
-+       { "$PF$KBSuKB.uKB.vKI438bkqNKBWoMRfw2PdZou$CMEmT5taen5vHXyfKFVLhBD7Gztck8Ty3tZRaWMyoei", "123456" },
-+       { "$PF$KBSuKB.uKB.vKF9Tn16RduDAgTM3Z.l/aei$pmMUjSCEqRPgvDuQd.4TILoHBCJb.eRI1OJs9wHl6tK", "password" },
-+       { "$PF$KBSuKB.uKB.vKCJjRcbMHw0f.TSl9tnE01W$l68/0NyLXZ7OlS5Q0afncXe.zF6JreHmHGmGXu8Jvl6", "mot\xf6rhead" },
-+       { "$PF$KBSuKB.uKB.vK/8xcuBfKOSYY2E8LsCUn9y$juY7gfiHtJtCOyCuppn4e8jdhhBtenAndOpLyg3UQLi", "\x55\xaa\xff\x55\xaa\xff\x55\xaa\xff\x55\xaa\xff" },
++       { "$PF$KBSuKB.uKB.vKLYAiOHNSF8O/s2JE5CzIT.$PF5U7SQ2SUv2T3yoGNnFmd0ChgdncXeA8YclGSCXoj2", "" },
++       { "$PF$KBSuKB.uKB.vKFPJXf03NKSBpQJsse2sbta$DLtZxzKGg9b.8Dxv3bkQmYcg7X9Jj0LMOtAwHjijCw2", "a" },
++       { "$PF$KBSuKB.uKB.vKIXVorTUFiGDqZJ9Y2kOqXC$ovh9tadAu7iQrl5koZ4SaRbw5xvlUVXGpITlM0GFjBi", "aa" },
++       { "$PF$KBSuKB.uKB.vKHJsDJ4hCg.nZG54XDReuYK$PquKWWqJdAcFW6J2xICMfum2UR.19gA7hwx8mNcZ9KK", "aaa" },
++       { "$PF$KBSuKB.uKB.vKHJ8Xxp.hLX3uZCanrWEq5q$g7myEHv4ru/dt78HDc0IR660R5p86vhxSBFWc44eWJO", "123456" },
++       { "$PF$KBSuKB.uKB.vKLNU1MCyL6p/qL3ojGG0Mfq$sO.Mt5Rx.AssFDjCEiSMSa.ClMZXndR2In5yibnpEGq", "password" },
++       { "$PF$KBSuKB.uKB.vKN1Tbr0HiDZLKT530brtmxu$gTICjssGqTpd3vOXOHGTjw.tdT8tOf2ee/9H5cYTF1K", "mot\xf6rhead" },
++       { "$PF$KBSuKB.uKB.vK.EjkXbv5cAON2Wwo/sk4yW$pAJINbPipkvw5UHbAKFTaugv4eApaOK1TY6/zTFMAdu", "\x55\xaa\xff\x55\xaa\xff\x55\xaa\xff\x55\xaa\xff" },
 +	{ NULL }
 +};
 +
