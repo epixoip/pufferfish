@@ -356,8 +356,7 @@ void *pufferfish (const char *pass, size_t passlen, char *settings, size_t outle
 
 	/* unpack the m_cost value */
 	memmove (mcost_str + 2, decoded + 2, 2);
-	if (0 == (m_cost = strtol (mcost_str, NULL, 16)))
-		return NULL;
+	m_cost = strtol (mcost_str, NULL, 16);
 
 	/* unpack the raw salt value */
 	memmove (rawsalt, decoded + 4, saltlen);
