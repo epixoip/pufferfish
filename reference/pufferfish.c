@@ -36,8 +36,9 @@ static void pf_initstate (puf_ctx *context, const void *pass, size_t passlen, co
 	};
 
 	/* calculate number of words per s-box */
-	initstate.m_cost = m_cost;
-	initstate.sbox_words = (m_cost * 1024) / NUM_SBOXES / WORDSIZ;
+	initstate.m_cost =  1 << m_cost;
+	initstate.log2_sbox_words = m_cost + 5; /* 5 = log2(1024 / 4 / 8) */
+	initstate.sbox_words = 1 << initstate.log2_sbox_words;
 
 	/* the following steps initialize the dynamic s-boxes: */
 
@@ -73,20 +74,31 @@ static void pf_initstate (puf_ctx *context, const void *pass, size_t passlen, co
 	memset (key_hash, 0, DIGEST_LEN);
 }
 
+/*
+ this is the old f-function that i originally designed, but it turned out
+ to be very, very, very, VERY slow. so i went back to using just shifts.
 
 static uint64_t pf_f (puf_ctx *context, uint64_t x)
 {
-	/* modified substantially from the original blowfish implementation,
-	   to use dynamic s-box size and to improve the distribution of the
-	   random accesses. probably some room for improvement here. */
-
 	uint64_t h = context->S[0][rotr64(x,61) % context->sbox_words]
 		   + context->S[1][rotr64(x,22) % context->sbox_words];
 
 	return ( h ^ context->S[2][rotr64(x,53) % context->sbox_words] )
 		   + context->S[3][rotr64(x,33) % context->sbox_words];
 }
+*/
 
+static uint64_t pf_f (puf_ctx *context, uint64_t x)
+{
+	/* this is the revised f-function that steve thomas and i came up with.
+	   my original shifits-only design only used 48/64 bits, so steve came
+	   up with the idea to shift n - log2_sbox_words to solve this problem */
+
+	return ((context->S[0][(x >> (64 - context->log2_sbox_words))                            ]  ^
+		 context->S[1][(x >> (48 - context->log2_sbox_words)) & (context->sbox_words - 1)]) +
+		 context->S[2][(x >> (32 - context->log2_sbox_words)) & (context->sbox_words - 1)]) ^
+		 context->S[3][(x >> (16 - context->log2_sbox_words)) & (context->sbox_words - 1)];
+}
 
 static void pf_encipher (puf_ctx *context, uint64_t *LL, uint64_t *RR)
 {
@@ -160,14 +172,8 @@ static void pf_expandkey (puf_ctx *context, const uint64_t data[KEYSIZ], const u
 	{
 		for (j = 0; j < context->sbox_words; j+=2)
 		{
-			/* since we use dynamic s-boxes, this ends up being more expensive than
-			   blowfish for m_cost > 8 because encipher is called $sbox_words times.
-			   in blowfish, encipher is always called 256 times here. in pufferfish,
-			   this is called m_cost*32 times. so for m_cost == 256, this ends up
-			   being 32 times more expensive than blowfish. but this also means that
-			   for e.g. m_cost == 8, this is equally expensive as blowfish at twice
-			   the memory. this should be taken into consideration when selecting an
-			   appropriate t_cost value. */
+			/* since we use dynamic s-boxes and encipher is called $sbox_words times,
+			   this ends up being more expensive than blowfish for m_cost > 3. */
 
 			L ^= data[j%KEYSIZ];
 			R ^= data[(j+1)%KEYSIZ];
@@ -267,34 +273,34 @@ char *pf_gensalt (const unsigned char *salt, size_t saltlen, unsigned int t_cost
 	static char *out;
 	int bytes;
 
-	buf = (unsigned char *) calloc (10 + saltlen, sizeof (unsigned char));
+	buf = (unsigned char *) calloc (4 + saltlen, sizeof (unsigned char));
 
 	/* we have two cost parameters, so in an effort to keep the hash
 	   string relatively clean, we convert them to hex and concatenate
 	   them so we always know their length. */
 
-	snprintf ((char *) buf, 11, "%02x%08x", t_cost, m_cost);
+	snprintf ((char *) buf, 11, "%02x%02x", t_cost, m_cost);
 
 	/* if the user didn't supply a salt, generate one for them */
 	if (salt == NULL)
 	{
 		fp = fopen ("/dev/urandom", "r");
-		bytes = fread  (buf + 10, sizeof (unsigned char), saltlen, fp);
+		bytes = fread  (buf + 4, sizeof (unsigned char), saltlen, fp);
 		fclose (fp);
 	}
 	else
 	{
-		memmove (buf + 10, salt, saltlen);
+		memmove (buf + 4, salt, saltlen);
 	}
 
 	/* the output buffer is a bit large, but better too big than too small */
-	out = (char *) calloc (PUF_ID_LEN + ((10 + saltlen) * 2), sizeof (char));
+	out = (char *) calloc (PUF_ID_LEN + ((4 + saltlen) * 2), sizeof (char));
 
 	/* copy hash identifer to the output string */
 	memmove (out, PUF_ID, PUF_ID_LEN);
 
 	/* encode the buffer and copy it to the output string */
-	bytes = pf_encode64 (&out[PUF_ID_LEN], buf, saltlen + 10);
+	bytes = pf_encode64 (&out[PUF_ID_LEN], buf, saltlen + 4);
 
 	/* add the trailing $ to the output string */
 	out[PUF_ID_LEN + bytes] = '$';
@@ -309,9 +315,8 @@ void *pufferfish (const char *pass, size_t passlen, char *settings, size_t outle
 {
 	/* the main pufferfish function. probably shouldn't call this directly */
 
-	static unsigned char *out;
-
 	puf_ctx context;
+	static unsigned char *out;
 
 	long t_cost = 0, m_cost = 0, count = 0;
 	uint64_t null_data[8] = { 0 };
@@ -343,19 +348,19 @@ void *pufferfish (const char *pass, size_t passlen, char *settings, size_t outle
 
 	/* decode the settings string */
 	bytes = pf_decode64 (decoded, pos, settings + PUF_ID_LEN);
-	saltlen = bytes - 10;
+	saltlen = bytes - 4;
 
 	/* unpack t_cost value */
 	memmove (tcost_str + 2, decoded, 2);
 	t_cost = strtol (tcost_str, NULL, 16);
 
 	/* unpack the m_cost value */
-	memmove (mcost_str + 2, decoded + 2, 8);
+	memmove (mcost_str + 2, decoded + 2, 2);
 	if (0 == (m_cost = strtol (mcost_str, NULL, 16)))
 		return NULL;
 
 	/* unpack the raw salt value */
-	memmove (rawsalt, decoded + 10, saltlen);
+	memmove (rawsalt, decoded + 4, saltlen);
 
 	/* the follwing steps are identical to the eksblowfish algorithm */
 

@@ -50,6 +50,7 @@ typedef struct pf_context
         uint64_t salt[KEYSIZ];          /* hashed salt */
         unsigned int m_cost;            /* in KiB  */
         unsigned int sbox_words;        /* words per sbox */
+	unsigned int log2_sbox_words;	/* log2 words per sbox */
 } puf_ctx;
 
 typedef enum { false, true } bool;
