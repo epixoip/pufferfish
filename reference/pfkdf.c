@@ -9,7 +9,7 @@
 
 int main (int argc, char **argv)
 {
-	unsigned int i, bits = 0, raw = 0, t_cost = 6, m_cost = 1024;
+	unsigned int i, bits = 0, raw = 0, t_cost = 6, m_cost = 10;
 	char password[255] = { 0 };
 	unsigned char *key;
 	char *tmp;
@@ -20,7 +20,7 @@ int main (int argc, char **argv)
 		fprintf (stderr, "    bits   -  number of bits to derive. required.\n");
 		fprintf (stderr, "    raw    -  0 (default) for hex, or 1 for raw bytes. optional.\n");
 		fprintf (stderr, "    t_cost -  number of log2 iterations. default 6. optional.\n");
-		fprintf (stderr, "    m_cost -  amount of memory to use in KiB. default 1024. optional.\n\n");
+		fprintf (stderr, "    m_cost -  number of log2 memory to use. default 10. optional.\n\n");
 		return 1;
 	}
 
