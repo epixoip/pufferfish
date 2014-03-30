@@ -1,10 +1,7 @@
 --- JohnTheRipper/src/pufferfish_fmt_plug.c	1969-12-31 16:00:00.000000000 -0800
-+++ JohnTheRipper-mine/src/pufferfish_fmt_plug.c	2014-03-30 05:49:01.084757487 -0700
-@@ -0,0 +1,193 @@
++++ JohnTheRipper-mine/src/pufferfish_fmt_plug.c	2014-03-30 06:22:01.216755363 -0700
+@@ -0,0 +1,190 @@
 +/* Authored March 2014 by epixoip
-+ *
-+ * This file is part of John the Ripper password cracker,
-+ * Copyright (c) 1996-2001,2008,2010-2013 by Solar Designer
 + *
 + * Redistribution and use in source and binary forms, with or without
 + * modification, are permitted.
