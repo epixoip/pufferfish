@@ -1,10 +1,20 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include "pufferfish.h"
+
+#include "../common/common.h"
+#include "../common/itoa64.h"
+#include "../common/api.h"
+
+#ifdef OPTIMIZED
+  #include "../optimized/pufferfish.h"
+#else
+  #include <openssl/sha.h>
+  #include <openssl/hmac.h>
+  #include "../reference/pufferfish.h"
+#endif
 
 
 int main (int argc, char **argv)
