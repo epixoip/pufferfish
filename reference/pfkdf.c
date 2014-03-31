@@ -6,7 +6,6 @@
 #include <openssl/hmac.h>
 #include "pufferfish.h"
 
-
 int main (int argc, char **argv)
 {
 	unsigned int i, bits = 0, raw = 0, t_cost = 6, m_cost = 10;
@@ -47,10 +46,9 @@ int main (int argc, char **argv)
 
 	key = pfkdf (bits, password, t_cost, m_cost);
 		
-	printf ("\n");
-
 	if (!raw)
 	{
+		printf ("\n");
 		for (i=0; i < bits / 8; i++)
 			printf ("%02x ", key[i]);
 		printf ("\n\n");
@@ -60,6 +58,8 @@ int main (int argc, char **argv)
 		for (i=0; i < bits / 8; i++)
 			printf ("%c", key[i]);
 	}
+
+	fflush(stdout);
 
 	free (tmp);
 	free (key);
