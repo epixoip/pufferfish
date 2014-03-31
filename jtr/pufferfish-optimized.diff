@@ -192,8 +192,8 @@
 +};
 +
 --- JohnTheRipper/src/pf_std.h	1969-12-31 16:00:00.000000000 -0800
-+++ JohnTheRipper-mine/src/pf_std.h	2014-03-30 05:49:01.076757487 -0700
-@@ -0,0 +1,370 @@
++++ JohnTheRipper-mine/src/pf_std.h	2014-03-31 11:08:00.812644305 -0700
+@@ -0,0 +1,357 @@
 +/* Authored March 2014 by epixoip
 + *
 + * Redistribution and use in source and binary forms, with or without
@@ -490,19 +490,6 @@
 +    R  = RR;
 +
 +
-+#define ENCRYPT 			\
-+    uchar_to_uint64 (L, ctext, 0);	\
-+    uchar_to_uint64 (R, ctext, 8);	\
-+    ENCIPHER;				\
-+    uint64_to_uchar (L, ctext, 0);	\
-+    uint64_to_uchar (R, ctext, 8);	\
-+    uchar_to_uint64 (L, ctext, 16);	\
-+    uchar_to_uint64 (R, ctext, 24);	\
-+    ENCIPHER;				\
-+    uint64_to_uchar (L, ctext, 16);	\
-+    uint64_to_uchar (R, ctext, 24);
-+
-+
 +#define KEYCIPHER(a,b,c,d)      \
 +{				\
 +    L ^= (a);                   \
@@ -565,8 +552,8 @@
 +#endif
 +
 --- JohnTheRipper/src/pf_std.c	1969-12-31 16:00:00.000000000 -0800
-+++ JohnTheRipper-mine/src/pf_std.c	2014-03-30 05:49:01.068757487 -0700
-@@ -0,0 +1,380 @@
++++ JohnTheRipper-mine/src/pf_std.c	2014-03-31 11:11:53.940644055 -0700
+@@ -0,0 +1,393 @@
 +/* Authored March 2014 by epixoip
 + *
 + * Redistribution and use in source and binary forms, with or without
@@ -788,10 +775,9 @@
 +	uint64_t *S[4], P[18];
 +	uint64_t state[8], key_hash[8];
 +	uint64_t L = 0, R = 0, LL = 0, RR = 0;
-+	unsigned int m_cost, sbox_words, log2_sbox_words;
-+	unsigned char ctext[] = "Drab as a fool, aloof as a bard.";
++	unsigned int sbox_words, log2_sbox_words;
++	uint64_t ctext[4] = { 0x4472616220617320, 0x6120666f6f6c2c20, 0x616c6f6f66206173, 0x206120626172642e };
 +
-+	m_cost =  1 << salt->m_cost;
 +	log2_sbox_words = salt->m_cost + 5;
 +	sbox_words = 1 << log2_sbox_words;
 +
@@ -867,9 +853,23 @@
 +	count = 64;
 +	do
 +	{
-+		ENCRYPT;
++		L = ctext[0];
++		R = ctext[1];
++		ENCIPHER;
++		ctext[0] = L;
++		ctext[1] = R;
++		L = ctext[2];
++		R = ctext[3];
++		ENCIPHER;
++		ctext[2] = L;
++		ctext[3] = R;
 +	}
 +	while (--count);
++
++	ctext[0] = __builtin_bswap64 (ctext[0]);
++	ctext[1] = __builtin_bswap64 (ctext[1]);
++	ctext[2] = __builtin_bswap64 (ctext[2]);
++	ctext[3] = __builtin_bswap64 (ctext[3]);
 +
 +	pf_sha512 ((const unsigned char *) ctext, 32, pf_out);
 +}

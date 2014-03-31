@@ -37,19 +37,6 @@
     R  = RR;
 
 
-#define ENCRYPT								\
-    uchar_to_uint64 (L, ctext, 0);					\
-    uchar_to_uint64 (R, ctext, 8);					\
-    ENCIPHER;								\
-    uint64_to_uchar (L, ctext, 0);					\
-    uint64_to_uchar (R, ctext, 8);					\
-    uchar_to_uint64 (L, ctext, 16);					\
-    uchar_to_uint64 (R, ctext, 24);					\
-    ENCIPHER;								\
-    uint64_to_uchar (L, ctext, 16);					\
-    uint64_to_uchar (R, ctext, 24);
-
-
 #define KEYCIPHER(a,b,c,d)						\
 {									\
     L ^= (a);								\
