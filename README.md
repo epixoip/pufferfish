@@ -42,7 +42,7 @@ function pufferfish (pwd, salt, t_cost, m_cost, outlen)
     end for
     key_hash := hmac_sha512 (state, pwd)
     expandkey (salt_hash, key_hash)
-    count := 2t_cost
+    count := 2^t_cost
     do
         expandkey (null, salt_hash)
         expandkey (null, key_hash)
