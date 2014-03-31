@@ -1,3 +1,7 @@
+/*  Authored by Jeremi Gosney, 2014
+    Placed in the public domain.
+ */
+
 #pragma once
 
 #include <stdint.h>

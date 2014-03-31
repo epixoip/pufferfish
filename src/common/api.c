@@ -1,3 +1,7 @@
+/*  Authored by Jeremi Gosney, 2014
+    Placed in the public domain.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,6 +17,7 @@
   #include <openssl/hmac.h>
   #include "../reference/pufferfish.h"
 #endif
+
 
 char *pf_gensalt (const unsigned char *salt, size_t saltlen, unsigned int t_cost, unsigned int m_cost)
 {

@@ -1,3 +1,7 @@
+/*  Authored by Jeremi Gosney, 2014
+    Placed in the public domain.
+ */
+
 #pragma once
 
 extern char *pf_gensalt (const unsigned char *salt, size_t saltlen, unsigned int t_cost, unsigned int m_cost);
