@@ -31,7 +31,7 @@ Input salt: A salt
 Output output: The password-derived outlen-long key
 
 function pufferfish (pwd, salt, t_cost, m_cost, outlen) 
-    sbox_words := 2(m_cost + 5)
+    sbox_words := 2^(m_cost + 5)
     salt_hash := sha512 (salt)
     state := hmac_sha512 (salt_hash, pwd)
     for i := 0 to i < 3 do
@@ -84,13 +84,13 @@ function keyexpand (data, key)
             L ⊕ data[i%keylength)
             R ⊕ data[(i+1)%keylength)
             encipher (L, R)
-            sbox[i][j]    L
-            sbox[i][j+1]  R
+            sbox[i][j]   := L
+            sbox[i][j+1] := R
         end for
     end for
 
 function f (x)
-    log2_sbox_words := 2(m_cost + 5)
+    log2_sbox_words := 2^(m_cost + 5)
     return ((sbox[0][x >> (64-log2_sbox_words)] ⊕
              sbox[1][x >> (48-log2_sbox_words) & (log2_sbox_words-1)]) +
              sbox[2][x >> (32-log2_sbox_words) & (log2_sbox_words-1)]) ⊕
