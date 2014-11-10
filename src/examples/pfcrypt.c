@@ -23,54 +23,55 @@
 
 int main (int argc, char **argv)
 {
-	unsigned int t_cost = 0, m_cost = 0, saltlen = 16;
-	char *tmp, *settings, *hash, *salt = NULL;
-	char password[255] = { 0 };
-	int valid = 1;
+    unsigned int t_cost = 0, m_cost = 0, saltlen = 16;
+    char *tmp, *settings, *hash, *salt = NULL;
+    char password[255] = { 0 };
+    int valid = 1;
 
-	if (argc < 3)
-	{
-		fprintf (stderr, "Usage: %s [t_cost] [m_cost] <salt> \n", argv[0]);
-		return 1;
-	}
+    if (argc < 3)
+    {
+        fprintf (stderr, "Usage: %s [t_cost] [m_cost] <salt> \n", argv[0]);
+        return 1;
+    }
 
-	while (1)
-	{
-		tmp = getpass ("Password: ");
-		memmove (password, tmp, strlen(tmp));
-		tmp = getpass ("Re-enter password: ");
+    while (1)
+    {
+        tmp = getpass ("Password: ");
+        memmove (password, tmp, strlen(tmp));
+        tmp = getpass ("Re-enter password: ");
 
-		if ((strlen (password) == strlen (tmp)) && (! strncmp (password, tmp, strlen (password))))
-			break;
+        if ((strlen (password) == strlen (tmp)) && (! strncmp (password, tmp, strlen (password))))
+            break;
 
-		fprintf (stderr, "Passwords do not match.\n\n");
-		memset (password, 0, 255);
-		sleep (1);
-	}
+        fprintf (stderr, "Passwords do not match.\n\n");
+        memset (password, 0, 255);
 
-	t_cost = atoi (argv[1]);
-	m_cost = atoi (argv[2]);
+        sleep (1);
+    }
 
-	if (argc == 4)
-	{
-		salt = argv[3];
-		saltlen = strlen (argv[3]);
-	}
+    t_cost = atoi (argv[1]);
+    m_cost = atoi (argv[2]);
 
-	settings = pf_gensalt ((const unsigned char *) salt, saltlen, t_cost, m_cost);
-	hash = pufferfish (password, strlen (password), settings, 32, false);
-	valid = pufferfish_validate (password, hash);
+    if (argc == 4)
+    {
+        salt = argv[3];
+        saltlen = strlen (argv[3]);
+    }
 
-	printf ("\n%s\n\n", hash);
+    settings = pf_gensalt ((const unsigned char *) salt, saltlen, t_cost, m_cost);
+    hash = pufferfish (password, strlen (password), settings, 32, false);
+    valid = pufferfish_validate (password, hash);
 
-	free (settings);
-	free (hash);
-	free (tmp);
+    printf ("\n%s\n\n", hash);
 
-	if (argc != 4)
-		free (salt);
+    free (settings);
+    free (hash);
+    free (tmp);
 
-	memset (password, 0, 255);
+    if (argc != 4)  free (salt);
 
-	return valid;
+    memset (password, 0, 255);
+
+    return valid;
 }
+

@@ -51,3 +51,6 @@ itoa64.o:
 
 clean:
 	rm -f pfcrypt-ref pfcrypt-opt pfkdf-ref pfkdf-opt examples/*.o common/*.o reference/*.o optimized/*.o
+
+distclean: clean
+

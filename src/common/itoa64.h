@@ -18,3 +18,4 @@ const static unsigned char index64[0x80] = {
 
 extern int encode64 (char *dst, unsigned char *src, int size);
 extern int decode64 (unsigned char *dst, int size, char *src);
+

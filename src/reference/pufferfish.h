@@ -12,13 +12,13 @@
 
 typedef struct pf_context
 {
-	uint64_t P[PUF_N + 2];		/* p-array */
-	uint64_t *S[NUM_SBOXES];	/* s-boxes */
-	uint64_t key[KEYSIZ];		/* generated key */
-	uint64_t salt[KEYSIZ];		/* hashed salt */
-	unsigned int m_cost;		/* in KiB  */
-	unsigned int sbox_words;	/* words per sbox */
-	unsigned int log2_sbox_words;	/* log2 words per sbox */
+    uint64_t P[PUF_N + 2];          /* p-array */
+    uint64_t *S[NUM_SBOXES];        /* s-boxes */
+    uint64_t key[KEYSIZ];           /* generated key */
+    uint64_t salt[KEYSIZ];          /* hashed salt */
+    unsigned int m_cost;            /* in KiB  */
+    unsigned int sbox_words;        /* words per sbox */
+    unsigned int log2_sbox_words;   /* log2 words per sbox */
 } puf_ctx;
 
 extern void *pufferfish (const char *pass, size_t passlen, char *settings, size_t outlen, bool raw);
