@@ -129,9 +129,6 @@ typedef struct pf_salt {
 {                                                                                                   \
     HASH_SBOX(x);                                                                                   \
                                                                                                     \
-    for (i = 0; i < SHA512_DIGEST_LENGTH; i++)                                                      \
-        key[i] = x[i];                                                                              \
-                                                                                                    \
     P[ 0] ^= key_u64[0];                                                                            \
     P[ 1] ^= key_u64[1];                                                                            \
     P[ 2] ^= key_u64[2];                                                                            \
@@ -192,4 +189,3 @@ const static unsigned char index64[0x80] = {
 
 extern int pf_newhash (const void *pass, const size_t pass_sz, const size_t cost_t, const size_t cost_m, char *hash);
 extern int pf_checkpass (const char *valid, const void *pass, const size_t pass_sz);
-

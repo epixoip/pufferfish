@@ -38,10 +38,6 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
     uint8_t log2_sbox_sz = 0;
     int i, j, k;
 
-    uint64_t ctext[] = {
-        0x4472616220617320ULL, 0x6120666f6f6c2c20ULL, 0x616c6f6f66206173ULL, 0x206120626172642eULL
-    };
-
     key_u64   = (uint64_t *) &key;
     salt_u64  = (uint64_t *) &salt;
     state_u64 = (uint64_t *) &state;
@@ -50,7 +46,7 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
     sbox_sz = 1ULL << log2_sbox_sz;
 
     HMAC_SHA512 ("", 0, salt_r, salt_sz, salt);
-    HMAC_SHA512 (salt, SHA512_DIGEST_LENGTH, key_r, *key_sz, key);
+    HMAC_SHA512 (key_r, *key_sz, salt, SHA512_DIGEST_LENGTH, key);
 
     for (i = 0; i < SHA512_DIGEST_LENGTH; i++)
         state[i] = salt[i] ^ key[i];
@@ -58,17 +54,13 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
     for (i = 0; i < PF_SBOX_N; i++) {
         S[i] = (uint64_t *) calloc (sbox_sz, sizeof(uint64_t));
         for (j = 0; j < sbox_sz; j += (SHA512_DIGEST_LENGTH / sizeof(uint64_t))) {
-            HMAC_SHA512 (salt, SHA512_DIGEST_LENGTH, state, SHA512_DIGEST_LENGTH, S[i] + j);
+            HMAC_SHA512 (state, SHA512_DIGEST_LENGTH, salt, SHA512_DIGEST_LENGTH, S[i] + j);
             for (k = 0; k < (SHA512_DIGEST_LENGTH / sizeof(uint64_t)); k++)
                 state_u64[k] ^= S[i][j+k];
         }
     }
 
-    for (i = 0; i < SHA512_DIGEST_LENGTH; i++)
-        key[i] ^= state[i];
-
-    for (i = 0; i < 4; i++)
-        ctext[i] ^= key_u64[i];
+    HMAC_SHA512 (key_r, *key_sz, state, SHA512_DIGEST_LENGTH, key);
 
     P[ 0] = 0x243f6a8885a308d3ULL ^ key_u64[0];
     P[ 1] = 0x13198a2e03707344ULL ^ key_u64[1];
@@ -92,33 +84,13 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
     ENCRYPT_P;
     ENCRYPT_S;
 
-    count = 1ULL << cost_t;
+    count = (1ULL << cost_t) + 1;
     do {
-        L = R = 0; REKEY(salt);
-        L = R = 0; REKEY(key);
+        L = R = 0;
+        REKEY(key);
     } while (--count);
-
-    count = 32;
-    do {
-        L = ctext[0];
-        R = ctext[1];
-        ENCIPHER;
-        ctext[0] = L;
-        ctext[1] = R;
-        L = ctext[2];
-        R = ctext[3];
-        ENCIPHER;
-        ctext[2] = L;
-        ctext[3] = R;
-    } while (--count);
-
-    ctext[0] = __builtin_bswap64 (ctext[0]);
-    ctext[1] = __builtin_bswap64 (ctext[1]);
-    ctext[2] = __builtin_bswap64 (ctext[2]);
-    ctext[3] = __builtin_bswap64 (ctext[3]);
 
     HASH_SBOX (key);
-    HMAC_SHA512 (key, SHA512_DIGEST_LENGTH, ctext, sizeof(uint64_t) * 4, key);
     memcpy (out, key, SHA512_DIGEST_LENGTH);
 
     for (i = 0; i < PF_SBOX_N; i++)
@@ -308,4 +280,3 @@ int main (int argc, char **argv)
     return 0;
 }
 #endif
-
