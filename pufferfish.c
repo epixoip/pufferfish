@@ -117,12 +117,8 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
     ctext[2] = __builtin_bswap64 (ctext[2]);
     ctext[3] = __builtin_bswap64 (ctext[3]);
 
+    HASH_SBOX (key);
     HMAC_SHA512 (key, SHA512_DIGEST_LENGTH, ctext, sizeof(uint64_t) * 4, key);
-    HASH_SBOX (salt);
-
-    for (i = 0; i < SHA512_DIGEST_LENGTH; i++)
-        key[i] ^= salt[i];
-
     memcpy (out, key, SHA512_DIGEST_LENGTH);
 
     for (i = 0; i < PF_SBOX_N; i++)
