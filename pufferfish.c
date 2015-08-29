@@ -31,7 +31,7 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
     unsigned char salt[SHA512_DIGEST_LENGTH] = {0};
     unsigned char state[SHA512_DIGEST_LENGTH] = {0};
     uint64_t *salt_u64, *state_u64, *key_u64;
-    uint64_t *S[4], P[18];
+    uint64_t *S[PF_SBOX_N], P[18];
     uint64_t L  = 0, R  = 0;
     uint64_t LL = 0, RR = 0;
     uint64_t count = 0, sbox_sz = 0;
