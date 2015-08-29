@@ -11,7 +11,7 @@ V2 includes several bug fixes and improvements over V1, as well as incorporates 
 
 * Supports passwords of any length (vs. bcrypt's max of 72 characters), any encoding, any character (0x00 - 0xff)
 * Dynamic s-boxes scale from 1 KiB to 8 EiB, scalable to large cache sizes forcing use of global memory for GPU attackers (e.g. 1 MiB vs bcrypt's 4 KiB)
-* Supports up to 2^<sup>63</sup> iterations
+* Supports up to 2<sup>63</sup> iterations
 * Upgrades Blowfish to 64-bit integers, resulting in improved performance vs. bcrypt for 64-bit defenders, and decreased performance for 32-bit attackers, e.g. GPUs
 * Inherits bcrypt's GPU resistance (small-but-frequent pseudorandom memory accesses), but also adds larger, less-frequent memory reads.
 
