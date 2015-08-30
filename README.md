@@ -1,11 +1,11 @@
-Pufferfish V2
+Pufferfish2
 ==========
 
-_Pufferfish V2_ is an adaptive password hashing scheme that attempts to improve upon the Blowfish block cipher and bcrypt's _Eksblowfish_ algorithm. 
+_Pufferfish2_ is an adaptive password hashing scheme that attempts to improve upon the [bcrypt](https://en.wikipedia.org/wiki/Bcrypt) password hashing scheme. Pufferfishv2 uses a modified version of the Blowfish key setup, and improves some of the design drawbacks of the original Eksblowfish algorithm in bcrypt. 
 
-V0 and V1 of Pufferfish were submitted to the [Password Hashing Competition](https://password-hashing.net) and the candidate was selected as a finalist, but was not selected as the winner. However, V1 of Pufferfish was hastily developed, and the reference design was plagued with several (very nasty) bugs. Both V0 and V1 also had some minor design flaws, although these did not affect the operation of the algorithm under normal conditions. 
+Pufferfish2 is based on the [Password Hashing Competition](https://password-hashing.net) candidate Pufferfish, which was selected as a finalist, but was not selected as the winner. However, Pufferfish V1 was hastily developed, and the reference design was plagued with several (very nasty) bugs. Both V0 and V1 also had some minor design flaws, although these did not affect the operation of the algorithm under normal conditions.
 
-V2 includes several bug fixes and improvements over V1, as well as incorporates some of the feedback received during the PHC review and selection process.
+Pufferfish2 includes several bug fixes and improvements over Pufferfish, as well as incorporates some of the feedback received on Pufferfish during the PHC review and selection process.
 
 ###Features
 
@@ -18,7 +18,7 @@ V2 includes several bug fixes and improvements over V1, as well as incorporates 
 
 ###Acknowledgements
 
-Pufferfish builds upon prior works by Bruce Schneier (Blowfish) and Niels Provos & David Mazieres (bcrypt). However, Pufferfish is not endorsed by these individuals. Its creation was prompted by the Password Hashing Competition, and its design was inspired by work to accelerate bcrypt cracking by Steve Thomas, Jens Steube, Alexander Peslyak, Sayantan Datta, and Katja Malvoni. Special thanks is due to Steve Thomas and Alexander Peslyak for their review and analysis of V0 and V1.
+Pufferfish2 builds upon prior works by Bruce Schneier (Blowfish) and Niels Provos & David Mazieres (bcrypt). However, Pufferfish is not endorsed by these individuals. Its creation was prompted by the Password Hashing Competition, and its design was inspired by work to accelerate bcrypt cracking by Steve Thomas, Jens Steube, Alexander Peslyak, Sayantan Datta, and Katja Malvoni. Special thanks is due to Steve Thomas and Alexander Peslyak for their review and analysis of Pufferfish, and to Steve Thomas again for his input on Pufferfish2.
 
 
 ###Usage
