@@ -29,8 +29,7 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
 {
     unsigned char key[SHA512_DIGEST_LENGTH] = {0};
     unsigned char salt[SHA512_DIGEST_LENGTH] = {0};
-    unsigned char state[SHA512_DIGEST_LENGTH] = {0};
-    uint64_t *salt_u64, *state_u64, *key_u64;
+    uint64_t *salt_u64, *key_u64;
     uint64_t *S[PF_SBOX_N], P[18];
     uint64_t L  = 0, R  = 0;
     uint64_t LL = 0, RR = 0;
@@ -40,7 +39,6 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
 
     key_u64   = (uint64_t *) &key;
     salt_u64  = (uint64_t *) &salt;
-    state_u64 = (uint64_t *) &state;
 
     log2_sbox_sz = cost_m + 5;
     sbox_sz = 1ULL << log2_sbox_sz;
@@ -48,19 +46,16 @@ static void pf_hashpass (const void *salt_r, const size_t salt_sz, const uint8_t
     HMAC_SHA512 ("", 0, salt_r, salt_sz, salt);
     HMAC_SHA512 (key_r, *key_sz, salt, SHA512_DIGEST_LENGTH, key);
 
-    for (i = 0; i < SHA512_DIGEST_LENGTH; i++)
-        state[i] = salt[i] ^ key[i];
-
     for (i = 0; i < PF_SBOX_N; i++) {
         S[i] = (uint64_t *) calloc (sbox_sz, sizeof(uint64_t));
         for (j = 0; j < sbox_sz; j += (SHA512_DIGEST_LENGTH / sizeof(uint64_t))) {
-            HMAC_SHA512 (state, SHA512_DIGEST_LENGTH, salt, SHA512_DIGEST_LENGTH, S[i] + j);
+            HMAC_SHA512 (key, SHA512_DIGEST_LENGTH, salt, SHA512_DIGEST_LENGTH, key);
             for (k = 0; k < (SHA512_DIGEST_LENGTH / sizeof(uint64_t)); k++)
-                state_u64[k] ^= S[i][j+k];
+                S[i][j+k] = key_u64[k];
         }
     }
 
-    HMAC_SHA512 (key_r, *key_sz, state, SHA512_DIGEST_LENGTH, key);
+    HASH_SBOX (key);
 
     P[ 0] = 0x243f6a8885a308d3ULL ^ key_u64[0];
     P[ 1] = 0x13198a2e03707344ULL ^ key_u64[1];
