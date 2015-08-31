@@ -1,5 +1,5 @@
 CC     = cc
-CFLAGS = -Wall -std=gnu99 -O2 -march=native -DTEST
+CFLAGS = -Wall -std=gnu99 -O3 -march=native -DTEST
 LIBS   = -lcrypto
 OBJS   = pufferfish.o
 

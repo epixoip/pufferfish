@@ -41,22 +41,15 @@
 #define PF_HASHSPACE (PF_SALTSPACE + bin2enc_len(SHA512_DIGEST_LENGTH))
 
 
-typedef struct pf_salt {
+typedef struct pf_salt
+{
     uint8_t cost_t;
     uint8_t cost_m;
     char salt[PF_SALT_SZ];
 } pf_salt;
 
 #define HMAC_SHA512(a,b,c,d,e)                                                                      \
-    HMAC (EVP_sha512(),(a),(b),(const unsigned char *)(c),(d),(unsigned char *)(e),NULL)
-
-#define F(x)                                                                                        \
-(                                                                                                   \
-    ((S[0][(x >> (64 - log2_sbox_sz))] ^                                                            \
-      S[1][(x >> 35) & (sbox_sz - 1)]) +                                                            \
-      S[2][(x >> 19) & (sbox_sz - 1)]) ^                                                            \
-      S[3][(x >>  3) & (sbox_sz - 1)]                                                               \
-)
+    HMAC(EVP_sha512(),(a),(b),(const unsigned char *)(c),(d),(unsigned char *)(e),NULL)
 
 #define ENCRYPT_P                                                                                   \
     EXPANDSTATE(salt_u64[0], salt_u64[1], P[ 0], P[ 1]);                                            \
@@ -84,6 +77,14 @@ typedef struct pf_salt {
     HMAC_SHA512(x, SHA512_DIGEST_LENGTH, S[1], sbox_sz * sizeof(uint64_t), x);                      \
     HMAC_SHA512(x, SHA512_DIGEST_LENGTH, S[2], sbox_sz * sizeof(uint64_t), x);                      \
     HMAC_SHA512(x, SHA512_DIGEST_LENGTH, S[3], sbox_sz * sizeof(uint64_t), x);
+
+#define F(x)                                                                                        \
+(                                                                                                   \
+    ((S[0][(x >> (64 - log2_sbox_sz))] ^                                                            \
+      S[1][(x >> 35) & (sbox_sz - 1)]) +                                                            \
+      S[2][(x >> 19) & (sbox_sz - 1)]) ^                                                            \
+      S[3][(x >>  3) & (sbox_sz - 1)]                                                               \
+)
 
 #define ENCIPHER                                                                                    \
     L ^= P[0];                                                                                      \
