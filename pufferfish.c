@@ -127,7 +127,7 @@ void pf_hashpass(const void *salt_r, const size_t salt_sz, const uint8_t cost_t,
     sbox_sz = 1ULL << log2_sbox_sz;
 
     PF_HMAC("", 0, salt_r, salt_sz, salt);
-    PF_HMAC(key_r, key_sz, salt, PF_DIGEST_LENGTH, key);
+    PF_HMAC(salt, PF_DIGEST_LENGTH, key_r, key_sz, key);
 
     for (i = 0; i < PF_SBOX_N; i++)
     {
