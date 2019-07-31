@@ -36,6 +36,7 @@ Using these parameters...
 #### bcrypt
 * Uses 4 KiB of memory (resident in L1 cache)
 * Performs 6,538,944 random 32-bit reads
+* ... and that's it. That's all it's got.
 
 In other words, in nearly the same duration of time, Pufferfish2 performs 82.5x more random reads than bcrypt (64-bit vs 32-bit as well), plus performs pre-hashing and sequential read-hash-write operations on 128.75 MiB of data. 
 
