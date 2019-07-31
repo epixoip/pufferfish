@@ -31,13 +31,13 @@ Using these parameters...
 * Uses 256 KiB of memory (resident in L2 cache)
 * Pre-hashes the supplied password and salt
 * Performs 539,264,128 random 64-bit reads
-* Reads, hashes, and writes 64.5 MiB of data
+* Reads, hashes, and writes 135,004,160 bytes of data
 
 #### bcrypt
 * Uses 4 KiB of memory (resident in L1 cache)
 * Performs 6,538,944 random 32-bit reads
 
-In other words, in nearly the same duration of time, Pufferfish2 performs 82.5x more random reads than bcrypt (64-bit vs 32-bit as well), plus performs pre-hashing and sequential read-hash-write operations on 64.5 MiB of data. 
+In other words, in nearly the same duration of time, Pufferfish2 performs 82.5x more random reads than bcrypt (64-bit vs 32-bit as well), plus performs pre-hashing and sequential read-hash-write operations on 128.75 MiB of data. 
 
 From this example, it is overwhelmingly obvious to see that Pufferfish2 is much stronger than bcrypt, while providing much better GPU resistance than bcrypt.
 
