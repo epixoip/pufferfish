@@ -3,17 +3,15 @@ Pufferfish2
 
 _Pufferfish2_ is an adaptive, cache-hard password hashing scheme that attempts to improve upon [bcrypt](https://en.wikipedia.org/wiki/Bcrypt). Pufferfish2 uses a modified version of the Blowfish key setup, and improves some of the drawbacks of bcrypt's original Eksblowfish algorithm. 
 
-Pufferfish2 is based on the [Password Hashing Competition](https://password-hashing.net) candidate Pufferfish, which was selected as a finalist, but was not selected as the winner. While Pufferfish V0 wasn't terrible, V1 was hastily developed and the reference code was plagued with several (very nasty) bugs. Both V0 and V1 also had some minor design flaws, although these did not affect the operation of the algorithm under normal conditions.
-
-Pufferfish2 includes several bug fixes and general improvements over Pufferfish, as well as incorporates some of the feedback received on Pufferfish during the PHC review and selection process.
+Pufferfish2 is based on the [Password Hashing Competition](https://password-hashing.net) candidate Pufferfish, which was selected as a finalist, but was not selected as the winner. Pufferfish2 includes several bug fixes and general improvements over Pufferfish, as well as incorporates feedback received on Pufferfish during the PHC review and selection process.
 
 ### Features
 
 * Supports passwords of any length (vs. bcrypt's max of 72 characters), any encoding, any character (0x00 - 0xff).
 * Dynamic s-boxes scale to fill L2 or L3 cache (and well beyond), forcing GPU attacker to use global memory.
-* Inherits bcrypt's cache hardness (small-but-frequent pseudo-random reads) but performs many more than bcrypt for the same target runtimes, and also adds larger, less-frequent memory reads and writes.
+* Inherits bcrypt's cache hardness via small-but-frequent pseudo-random reads, but performs many more reads than bcrypt for the same target runtimes. Pufferfish2 also adds several larger, less-frequent memory read-hash-write operations.
 * Supports up to 2<sup>63</sup> iterations.
-* Upgrades Blowfish to 64-bit integers, resulting in improved performance vs. bcrypt for 64-bit defenders, and decreased performance for 32-bit attackers(e.g., GPUs.)
+* Upgrades Blowfish to 64-bit integers, resulting in improved performance vs. bcrypt for 64-bit defenders, and decreased performance for 32-bit attackers (e.g., GPUs.)
 
 
 ### Pufferfish2 vs. bcrypt - By the Numbers
