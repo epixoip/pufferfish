@@ -201,7 +201,11 @@ int pf_mksalt(const void *salt_r, const size_t salt_sz, const uint8_t cost_t, co
         fclose(fp);
 
         if (bytes != PF_SALT_SZ)
-            return ENODATA;
+            #ifdef ENODATA
+                return ENODATA;
+            #else
+                return ENOATTR;
+            #endif
     }
     else
     {
